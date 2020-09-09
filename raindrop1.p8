@@ -24,7 +24,6 @@ function _init()
 	dodge_state = 0
 	drone_dodge_state = 0
 	one_up_hit = 0
-	critical_hit = 0
 	one_up_explode = 0
 	explode_animation = 0
 	offset = 0
@@ -98,17 +97,29 @@ function draw_drop_three(x, y, col)
 end
 
 function draw_circle(x, y, r, direction)
-	circfill(x, y, r, 1)
-	circ(x, y, r, 12)
-	offset = flr(r/2)
-	offset2 = 0
-	if r > 18 then
-		offset2 = 1
-	end
-	if direction == 1 then
-		line(x - offset, y + offset, x - offset + 1 + offset2, y + offset, 7)
+	local draw = 1
+	if hit_token < 100 and (hit_token % 2 == 0 or hit_token % 3 == 0) then
+		draw = 0
+		--circfill(x, y, r, 0)
 	else
-		line(x + offset, y + offset, x + offset - 1 - offset2, y + offset, 7)
+		draw = 1
+	end
+	if draw == 1 then
+
+		circfill(x, y, r, 1)
+		circ(x, y, r, 12)
+
+		offset = flr(r/2)
+		offset2 = 0
+		if r > 18 then
+			offset2 = 1
+		end
+		if direction == 1 then
+			line(x - offset, y + offset, x - offset + 1 + offset2, y + offset, 7)
+		else
+			line(x + offset, y + offset, x + offset - 1 - offset2, y + offset, 7)
+		end
+
 	end
 end
 
@@ -289,9 +300,7 @@ function first_raindrop()
 				if (btn(➡️)) then
 					self.direction = 2
 				end
-				if critical_hit == 0 then
-					draw_circle(self.x, self.y, self.radius, self.direction)
-				end
+				draw_circle(self.x, self.y, self.radius, self.direction)
 					-- self.explode_t = draw_one_up_explode(self.x, self.y, self.radius, self.direction, self.explode_t)
 				if (btn(⬇️) and self.exhaust == 1) then
 					add_new_exhaust(self.x, self.y, self.radius)
@@ -390,7 +399,11 @@ function weight_to_speed(weight, accel)
 	elseif weight >= 75 then
 		return 4 + accel
 	else
-		return 0
+		if one_up.stage == 0 then
+			return 0
+		else
+			return 1
+		end
 	end
 end
 
@@ -667,11 +680,11 @@ function _update()
 			animate_clouds()
 			cloud_token = 0
 		end
-		if dodge_state == 1 and girder_token > 50 then
+		if dodge_state == 1 and girder_token > 50 and negative_altitude > 130 and one_up.weight > 25 then
 			add_new_girder()
 			girder_token = 0
 		end
-		if drone_token > 50 and negative_altitude > 30 and negative_altitude < 100 then
+		if drone_token > 50 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 then
 			add_new_drone()
 			sfx(20)
 			drone_token = 0
@@ -685,26 +698,26 @@ function _update()
 
 		if one_up_hit == 1 and hit_token > 100 then
 			if one_up.weight < 30 then
-				-- pause here
-				critical_hit = 1
+				-- TODO: pause here
 				negative_altitude-=15
+				for g in all(girders) do
+					g:remove()
+				end
+
+				for d in all(drones) do
+					d:remove()
+				end
+
+				for dr in all(droplets) do
+					dr:remove()
+				end
 			end
 			one_up.weight = one_up.weight / 2
 			one_up_hit = 0
 			hit_token = 0
 			one_up_explode = 1
 			draw_one_up_explode(one_up.x, one_up.y, one_up.radius, 0, 0)
-			for g in all(girders) do
-				g:remove()
-			end
-
-			for d in all(drones) do
-				d:remove()
-			end
-
-			for dr in all(droplets) do
-				dr:remove()
-			end
+			sfx(9)
 		end
 
 
@@ -857,7 +870,7 @@ __sfx__
 011000001c7501c0001c0501c00016050160001605016000177301773017730177301373013730137301375000000000000000000000000000000000000000000000000000000000000000000000000000000000
 004000000461006610066100461004610056100661006610056100461004610066100761007610066100461004610046100561007610076100561004610056100761007610046100461006610076100561005610
 014000000d7000d7000d7540d7500d7500d7550d7000d70014700147001475414750147501475514000000001c700000001c7541c7501c7501c7551c000000001570000000157541575015750157551500000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200002d7702e5703177033570357603455035750345503575032550317402f5402d7402b5302a730285202672024520237201f5201b7201772013720107200e7200b720087200672005720057200272000720
 000100000557007570095700a5700c570105700f570105700a5700d5700f570125701557015570185701d570205702257026570295702c5702d5700c5700e5701257015570185701c57020570245702857028570
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

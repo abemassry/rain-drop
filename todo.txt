@@ -1,4 +1,7 @@
-- fix stuck state when we got hit and we were too small
+- fix girders
+- add same drone protections to minimum size for girders
+- different sound effect for negative altitude drop
+- pause game somehow before negative altitude drop (possibly blank screen)
 
 - alternative girders:
 	- birds
