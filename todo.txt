@@ -1,0 +1,30 @@
+- fix stuck state when we got hit and we were too small
+
+- alternative girders:
+	- birds
+	- butterflies
+	- kites
+	- airplanes
+	- drones
+	- ufos
+	- balloons
+	- superman
+	- news chopper
+	- angry cloud
+	- lightning bolt
+	- burgers
+	- jawn
+
+# Stage 2
+- evil green raindrop kinda like acid rain
+
+
+# Advice
+	- Damage == Drama
+
+# Promotion
+- Add twitch bot
+- fake twitch money
+
+# Subjects to chat about
+
