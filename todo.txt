@@ -1,7 +1,11 @@
-- fix girders
-- add same drone protections to minimum size for girders
-- different sound effect for negative altitude drop
-- pause game somehow before negative altitude drop (possibly blank screen)
+- shimmering water
+- finish level
+	- negative altitude 175
+	- another transition up in front of the city
+	- park green grass
+	- puddle with tree next to it
+	- hit the puddle, huge splash animation
+- altitude bar
 
 - alternative girders:
 	- birds

@@ -15,6 +15,10 @@ function _init()
 	girders={}
 	drones={}
 	overlay_state = 0
+	-- overlay_state 0 title screen
+	-- overlay_state 1 main play
+	-- overlay_state 2 pause
+	pause_length = 5
 	negative_altitude = 20 -- default 0
 	-- remember to change weight as well back to 1 in one_up
 	cloud_token = 0
@@ -27,6 +31,7 @@ function _init()
 	one_up_explode = 0
 	explode_animation = 0
 	offset = 0
+	accel_shake = 0
 	first_raindrop()
 	for i=0,30 do
 		add_new_droplet(0)
@@ -171,12 +176,14 @@ function end_one_up_explode(t)
 	return t
 end
 
-function screen_shake()
+function screen_shake(acs)
 	local fade = 0.95
 	local offset_x=1-rnd(2)
 	local offset_y=1-rnd(2)
-	offset_x*=offset
-	offset_y*=offset
+	if acs == 0 then
+		offset_x*=offset
+		offset_y*=offset
+	end
 
 	camera(offset_x,offset_y)
 	offset*=fade
@@ -217,6 +224,16 @@ function animate_clouds()
 	})
 end
 
+function ssp(s,x,y,c)
+	a=flr(s/16)*512+(s%16*4)+64*y+flr(x/2)
+	v=peek(a)
+	if(x%2==0) then
+		poke(a,16*flr(v/16) + c)
+	else
+		poke(a,16*c+v%16)
+	end
+end
+
 function draw_skyline(bg_height)
 	bg_height*=2
 	if (bg_height < 64) then
@@ -236,6 +253,8 @@ function draw_skyline(bg_height)
 	spr(136, 40, bg_height+32, 6, 4, false, true)
 	spr(136, 80, bg_height+32, 6, 4, false, true)
 	spr(136, 120, bg_height+32, 6, 4, false, true)
+	-- ssp(136, 3, 4, 7) this worked
+	-- TODO: shift lines of reflected images right here
 	pal(2,130, 1)
 	pal(13, 141, 1)
 end
@@ -281,6 +300,7 @@ function first_raindrop()
 		radius=1,
 		accel=0,
 		accel_toggle=0,
+		accel_time=0,
 		exhaust=0,
 		explode_t=0,
 		stage=0,
@@ -357,10 +377,20 @@ function first_raindrop()
 					if self.accel < 0 then
 						self.accel = 0
 					end
+					if self.weight < 20 then
+						self.accel = 0
+					end
 				end
 				if self.weight > 4 then
 					negative_altitude += (self.accel / 350)
 					negative_altitude += (weight_to_speed(self.weight, self.accel) / 350)
+				end
+				self.accel_time+=1
+				if self.accel_time > 45 then
+					accel_shake = 1
+				end
+				if self.weight < 20 then
+					accel_shake = 0
 				end
 			else
 				self.accel -= 1
@@ -370,6 +400,8 @@ function first_raindrop()
 				if self.weight > 4 then
 					negative_altitude += (weight_to_speed(self.weight, self.accel) / 350)
 				end
+				self.accel_time = 0
+				accel_shake = 0
 			end
 			if self.y > 90 and self.weight > 10 then
 				self.y = 90
@@ -461,6 +493,9 @@ function add_new_droplet(initialy, initialx, initweight)
 
 			if one_up.weight > 10 and self.last < 0 then
 				self.y-=1 + one_up.accel
+			end
+			if one_up.weight <= 10 and one_up.stage == 1 then
+				self.y-=1
 			end
 			if one_up.weight > 15 then
 				self.y-=weight_to_speed(one_up.weight, one_up.accel)
@@ -672,6 +707,11 @@ function _update()
 			add_new_droplet(130)
 			i=0
 		end
+		if one_up.weight <= 10 and i > 15 and one_up.stage == 1 then
+			add_new_droplet(130)
+			i=0
+		end
+
 		cloud_token+=1
 		drone_token+=1
 		girder_token+=1
@@ -680,11 +720,11 @@ function _update()
 			animate_clouds()
 			cloud_token = 0
 		end
-		if dodge_state == 1 and girder_token > 50 and negative_altitude > 130 and one_up.weight > 25 then
+		if dodge_state == 1 and girder_token > 65 and negative_altitude > 130 and negative_altitude < 175 and one_up.weight > 25 then
 			add_new_girder()
 			girder_token = 0
 		end
-		if drone_token > 50 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 then
+		if drone_token > 100 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 then
 			add_new_drone()
 			sfx(20)
 			drone_token = 0
@@ -692,13 +732,16 @@ function _update()
 
 		if one_up_explode == 1 then
 			screen_shake()
+		elseif accel_shake == 1 then
+			screen_shake(1)
+			sfx(13)
 		else
 			camera(0,0)
 		end
 
 		if one_up_hit == 1 and hit_token > 100 then
+			local critical_hit = 0
 			if one_up.weight < 30 then
-				-- TODO: pause here
 				negative_altitude-=15
 				for g in all(girders) do
 					g:remove()
@@ -711,17 +754,31 @@ function _update()
 				for dr in all(droplets) do
 					dr:remove()
 				end
+				critical_hit = 1
 			end
 			one_up.weight = one_up.weight / 2
 			one_up_hit = 0
 			hit_token = 0
 			one_up_explode = 1
 			draw_one_up_explode(one_up.x, one_up.y, one_up.radius, 0, 0)
-			sfx(9)
+			if critical_hit == 1 then
+				sfx(11)
+				overlay_state = 2
+			else
+				sfx(9)
+			end
 		end
 
+	elseif overlay_state == 2 then
+
+		pause_length-=1
+		if pause_length == 0 then
+			overlay_state = 1
+			pause_length = 5
+		end
 
 	end
+
 end
 
 function _draw()
@@ -872,9 +929,9 @@ __sfx__
 014000000d7000d7000d7540d7500d7500d7550d7000d70014700147001475414750147501475514000000001c700000001c7541c7501c7501c7551c000000001570000000157541575015750157551500000000
 000200002d7702e5703177033570357603455035750345503575032550317402f5402d7402b5302a730285202672024520237201f5201b7201772013720107200e7200b720087200672005720057200272000720
 000100000557007570095700a5700c570105700f570105700a5700d5700f570125701557015570185701d570205702257026570295702c5702d5700c5700e5701257015570185701c57020570245702857028570
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000300003405032550320502f5602c0602a56029060265602306023550200501d54020040195401d0401754019040145301603011530120300e5300f0300b5300b03007530080200452006020015200002000020
+000100000361005610096100c6100f6101361016610196101b6101d61020610216102361024610266102761028610296102b6102c6102d6102e6102e6102f6102f61030610306103061030610306103061030610
+000100000a6100b6100b6100b6100b6100b6100b6100b6100b6100b6100b6100c6100c6100c6100c6100c6100c6100b6100b6100b6100b6100b6100b6100b6100b6100b6100b6100b6100a6100a6100a6100a610
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
