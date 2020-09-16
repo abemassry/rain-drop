@@ -14,17 +14,19 @@ function _init()
 	clouds={}
 	girders={}
 	drones={}
+	water_shimmer={}
 	overlay_state = 0
 	-- overlay_state 0 title screen
 	-- overlay_state 1 main play
 	-- overlay_state 2 pause
 	pause_length = 5
-	negative_altitude = 20 -- default 0
+	negative_altitude = 15 -- default 0
 	-- remember to change weight as well back to 1 in one_up
 	cloud_token = 0
 	girder_token = 0
 	drone_token = 0
 	hit_token = 0
+	water_shimmer_token = 1
 	dodge_state = 0
 	drone_dodge_state = 0
 	one_up_hit = 0
@@ -224,15 +226,36 @@ function animate_clouds()
 	})
 end
 
-function ssp(s,x,y,c)
-	a=flr(s/16)*512+(s%16*4)+64*y+flr(x/2)
-	v=peek(a)
-	if(x%2==0) then
-		poke(a,16*flr(v/16) + c)
-	else
-		poke(a,16*c+v%16)
-	end
+function add_new_shimmer(xinit, yinit)
+	add(water_shimmer, {
+		x=xinit,
+		y=yinit,
+		xmod=0,
+		xstate=1,
+		draw=function(self)
+			if self.xmod > 0 then
+				line(self.x-self.xmod, self.y, self.x+self.xmod, self.y, 0)
+			end
+		end,
+		update=function(self)
+			if (self.xstate == 1) then
+				self.xmod+=1
+			else
+				self.xmod-=1
+			end
+
+			if (self.xmod > 3) then
+				self.xstate = -1
+			end
+
+			if self.xmod < 0 then
+				del(water_shimmer, self)
+			end
+
+		end
+	})
 end
+
 
 function draw_skyline(bg_height)
 	bg_height*=2
@@ -253,10 +276,28 @@ function draw_skyline(bg_height)
 	spr(136, 40, bg_height+32, 6, 4, false, true)
 	spr(136, 80, bg_height+32, 6, 4, false, true)
 	spr(136, 120, bg_height+32, 6, 4, false, true)
-	-- ssp(136, 3, 4, 7) this worked
-	-- TODO: shift lines of reflected images right here
 	pal(2,130, 1)
 	pal(13, 141, 1)
+
+	-- for i=0,1 do
+	-- 	local r = flr(rnd(15))+113
+	-- 	if (r % 2 == 0 and i == 1) then
+	-- 		r+=1
+	-- 	elseif (r % 2 != 0 and i == 0) then
+	-- 		r-=1
+	-- 	end
+	-- 	add_new_shimmer(flr(rnd(128)), r)
+	-- end
+	--add_new_shimmer(flr(rnd(128)), flr(rnd(15))+113)
+	add_new_shimmer(flr(rnd(128)), flr(rnd(15))+bg_height+32+16)
+
+	for w in all(water_shimmer) do
+		if (cloud_token % 5 == 0) then
+			w:update()
+		end
+		w:draw()
+	end
+
 end
 
 function draw_sky(bg_height)
@@ -295,7 +336,7 @@ function first_raindrop()
 		soundtrack=1,
 		direction=1,
 		pos=flr(rnd(4)),
-		weight=90,
+		weight=100,
 		speed=1,
 		radius=1,
 		accel=0,
