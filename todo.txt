@@ -1,5 +1,4 @@
 - finish level
-	- negative altitude 175
 	- another transition up in front of the city
 	- park green grass
 	- puddle with tree next to it

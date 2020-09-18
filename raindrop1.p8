@@ -20,7 +20,7 @@ function _init()
 	-- overlay_state 1 main play
 	-- overlay_state 2 pause
 	pause_length = 5
-	negative_altitude = 15 -- default 0
+	negative_altitude = 175 -- default 0
 	-- remember to change weight as well back to 1 in one_up
 	cloud_token = 0
 	girder_token = 0
@@ -705,6 +705,17 @@ function add_new_drone()
 	})
 end
 
+function draw_end_first_stage_bg()
+	bg_height*=2
+	if (bg_height < 64) then
+		dodge_state = 1
+		bg_height = 64
+	end
+	spr(144, 0, bg_height, 1, 3)
+
+end
+
+
 function _update()
 	if overlay_state == 0 then
 		if i % 2 == 0 then
@@ -836,7 +847,12 @@ function _draw()
 
 			-- rectfill(0, bg_height, 128, 128, 1)
 			draw_skyline(bg_height)
+
+			if negative_altitude > 175 then
+				draw_end_first_stage_bg(bg_height)
+			end
 		end
+
 		for c in all(clouds) do
 			c:draw()
 		end
