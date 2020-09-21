@@ -1,7 +1,5 @@
 - finish level
-	- another transition up in front of the city
-	- park green grass
-	- puddle with tree next to it
+	- draw tree
 	- hit the puddle, huge splash animation
 - altitude bar
 
