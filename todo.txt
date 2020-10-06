@@ -1,6 +1,6 @@
 - finish level
-	- draw tree
-	- hit the puddle, huge splash animation
+	- draw tree ?
+	- use sfx(15) somewhere, explosion sound effect for end of level
 - altitude bar
 
 - alternative girders:
