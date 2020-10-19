@@ -1,7 +1,5 @@
-- finish level
-	- draw tree ?
-	- use sfx(15) somewhere, explosion sound effect for end of level
-- altitude bar
+- if one up is hit then score is reduced
+- if one up loses then score is set to 0
 
 - alternative girders:
 	- birds

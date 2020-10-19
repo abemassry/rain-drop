@@ -21,8 +21,11 @@ function _init()
 	-- overlay_state 2 pause
 	-- overlay_state 3 end of level
 	pause_length = 5
-	negative_altitude = 174 -- default 0
+	negative_altitude = 0 -- default 0
 	-- remember to change weight as well back to 1 in one_up
+	score = 0
+	score_counter = 0
+	score_tabulate = 0
 	cloud_token = 0
 	girder_token = 0
 	drone_token = 0
@@ -196,12 +199,21 @@ function draw_huge_splash(xinit, yinit)
 	huge_splash_particles+=1
 
 	if huge_splash_particles < 25 then
+		if (huge_splash_particles == 10) then
+			sfx(15)
+			sfx(16)
+		end
 		for op in all(one_up_particles) do
 			op:update()
 			op:draw()
 		end
-	elseif huge_splash_particles < 40 then
-		circfill(xinit, yinit, huge_splash_particles*3, 12)
+	elseif huge_splash_particles < 120 then
+		circfill(xinit, yinit, huge_splash_particles, 12)
+		circfill(xinit-50, yinit-50, huge_splash_particles, 12)
+		circfill(xinit+50, yinit-20, huge_splash_particles, 12)
+		circfill(xinit, yinit-100, huge_splash_particles, 12)
+		circfill(xinit-20, yinit-90, huge_splash_particles, 12)
+		circfill(xinit+20, yinit-90, huge_splash_particles, 12)
 	end
 
 	if huge_splash_particles > 40 then
@@ -576,6 +588,7 @@ function add_new_droplet(initialy, initialx, initweight)
 					self.y < osy_max) then
 				one_up.weight += self.weight
 				self.weight = 0
+				score+=1
 			end
 			self.last=self.last*-1
 
@@ -787,6 +800,35 @@ function draw_end_first_stage_bg(bg_height)
 
 end
 
+function draw_altitude_bar()
+	local multiplier = 127/175
+	local current_altitude = flr(negative_altitude * multiplier)
+	line(0, 0, 127, 0, 5)
+	for i=0,current_altitude do
+		pset(i, 0, 12)
+	end
+end
+
+function draw_score()
+	print(score, 2, 2, 5)
+end
+
+function draw_transition()
+	local multiplier = flr(score/100) * 2
+	if multiplier < 1 then
+		multiplier = 1
+	end
+	if score_tabulate == 0 then
+		score = score + one_up.weight
+		score_tabulate = 1
+	end
+	if score_counter < score then
+		score_counter+=multiplier
+		sfx(17)
+	end
+	print('score: '..score_counter, 40, 50, 7)
+end
+
 
 function _update()
 	if overlay_state == 0 then
@@ -895,6 +937,10 @@ function _update()
 			end
 		end
 
+	if negative_altitude > 400 then
+		overlay_state = 4
+	end
+
 	elseif overlay_state == 2 then
 
 		pause_length-=1
@@ -923,7 +969,7 @@ function _draw()
 			draw_skyline(bg_height)
 
 			if negative_altitude > 175 then
-				if negative_altitude > 177 and negative_altitude < 300 then
+				if negative_altitude > 177 and negative_altitude < 400 then
 					negative_altitude*=1.005
 				end
 				draw_end_first_stage_bg(bg_height)
@@ -933,6 +979,14 @@ function _draw()
 		for c in all(clouds) do
 			c:draw()
 		end
+		-- above is background
+
+		-- hud
+		draw_score()
+		-- end hud
+
+		-- below is foreground
+		draw_altitude_bar()
 		one_up:draw()
 		if one_up_explode == 1 then
 			for op in all(one_up_particles) do
@@ -953,11 +1007,14 @@ function _draw()
 			d:draw()
 		end
 
-		print('cpu:'..flr(stat(1)*100)..'%', 0, 6, 7)
-		print('w:'..one_up.weight, 0, 10, 7)
-		print('na:'..negative_altitude, 0, 16, 7)
+		-- print('cpu:'..flr(stat(1)*100)..'%', 0, 6, 7)
+		-- print('w:'..one_up.weight, 0, 10, 7)
+		-- print('na:'..negative_altitude, 0, 16, 7)
 	elseif overlay_state == 3 then
 		cls()
+	elseif overlay_state == 4 then
+		cls()
+		draw_transition()
 	end
 end
 __gfx__
@@ -1110,9 +1167,9 @@ __sfx__
 000100000361005610096100c6100f6101361016610196101b6101d61020610216102361024610266102761028610296102b6102c6102d6102e6102e6102f6102f61030610306103061030610306103061030610
 000100000a6100b6100b6100b6100b6100b6100b6100b6100b6100b6100b6100c6100c6100c6100c6100c6100c6100b6100b6100b6100b6100b6100b6100b6100b6100b6100b6100b6100a6100a6100a6100a610
 000400003f7603e7603c7603b76039760387603876037750367503575035740347403374031740307402e7402c7402b74029740277402574023740217401e7401b740187401674013740107400b7400674003740
-000200002465026650255502a5402b5402f6402e5303163031630305303263033630335303663036620356203362030520306202e6202a5202862025510216101d5101861015510126100c510096100461000610
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000800000063002630066300a6300f630166301d63022630286302f63034630386303b6303d6303d6303e6303e6303e6303f6303f6303f6303f6303e6303c63039630356302f6302762020610176000560004600
+00070000047730577308773097730a7730c7730f77311773127731577317773197731b7731d7731f773217732377326773287732a7732c7732e77331763327633576337763397533b7433d7333f7133f75319703
+000100002505000050250500005025050000502505000050250502505025050250502605026050260502605026050260502605026050260502605027050290502a0602b0603006034060350703f0703f0703f070
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000800002154320543205331f5331f5331f5331e5231e5231d5231d5231d5231d5231c5231b5231b5131a513195131951318513185131751317513145131350311503105030e5030d5030c5030a5030950306503
@@ -1130,4 +1187,6 @@ __music__
 02 41424305
 00 41424344
 03 07084344
+00 41424344
+00 0f104344
 
