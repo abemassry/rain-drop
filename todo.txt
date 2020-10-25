@@ -1,6 +1,3 @@
-- if one up is hit then score is reduced
-- if one up loses then score is set to 0
-
 - alternative girders:
 	- birds
 	- butterflies
