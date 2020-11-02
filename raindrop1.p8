@@ -16,11 +16,11 @@ function _init()
 	drones={}
 	water_shimmer={}
 	overlay_state = 0
-	level = 1
 	-- overlay_state 0 title screen
 	-- overlay_state 1 main play
 	-- overlay_state 2 pause
 	-- overlay_state 3 end of level
+	level = 1 -- default 1
 	pause_length = 5
 	negative_altitude = 173 -- default 0
 	-- remember to change weight as well back to 1 in one_up
@@ -34,7 +34,6 @@ function _init()
 	water_shimmer_token = 1
 	water_sparkle = {194, 195, 196, 197}
 	dodge_state = 0
-	drone_dodge_state = 0
 	one_up_hit = 0
 	one_up_explode = 0
 	explode_animation = 0
@@ -325,8 +324,13 @@ function draw_skyline(bg_height)
 	spr(136, 40, bg_height+32, 6, 4, false, true)
 	spr(136, 80, bg_height+32, 6, 4, false, true)
 	spr(136, 120, bg_height+32, 6, 4, false, true)
-	pal(2,130, 1)
-	pal(13, 141, 1)
+	if level == 2 then
+		pal(2, 132, 1)
+		pal(13, 142, 1)
+	else
+		pal(2, 130, 1)
+		pal(13, 141, 1)
+	end
 
 	-- for i=0,1 do
 	-- 	local r = flr(rnd(15))+113
@@ -767,6 +771,50 @@ function add_new_drone()
 	})
 end
 
+function add_new_evil_green()
+	local side = flr(rnd(2))
+	if (side == 0) then
+		xstart = -2
+	else
+		xstart = 130
+	end
+	local evilspeed = 1
+	add(evil_green, {
+		x=xstart,
+		y=10,
+		s=side,
+		remove=function(self)
+			del(evil_green, self)
+		end,
+		draw=function(self)
+			spr(2, self.x, self.y)
+		end,
+		update=function(self)
+			if self.s == 0 then
+				self.x += 1
+			elseif self.s == 1 then
+				self.x -= 1
+			end
+			self.y += 1
+			osx_min = one_up.x - one_up.size - 1
+			osx_max = one_up.x + one_up.size + 1
+			osy_min = one_up.y - one_up.size - 1
+			osy_max = one_up.y + one_up.size + 1
+			if (self.x > osx_min and
+					self.x < osx_max and
+					self.y > osy_min and
+					self.y < osy_max) then
+					if (hit_token > 100) then
+						one_up_hit = 1
+					end
+			end
+			if self.y < -10 then
+				del(evil_green, self)
+			end
+		end
+	})
+end
+
 function draw_end_first_stage_bg(bg_height)
 	bg_height+=156
 	if (bg_height < 104) then
@@ -821,7 +869,7 @@ function draw_transition()
 		multiplier = 1
 	end
 	if score_tabulate == 0 then
-		score = score + one_up.weight
+		score = flr(score + one_up.weight)
 		score_tabulate = 1
 	end
 	if score_counter <= score then
@@ -838,7 +886,6 @@ end
 
 function reset_to_next_stage()
 	negative_altitude = 0
-	one_up.weight = 1
 	droplets={}
 	rain={}
 	exhaust_drop={}
@@ -846,7 +893,7 @@ function reset_to_next_stage()
 	one_up_particles={}
 	clouds={}
 	girders={}
-	drones={}
+	evil_green={}
 	water_shimmer={}
 	overlay_state = 1
 	level = 2 -- change this to if based on previous value
@@ -855,9 +902,8 @@ function reset_to_next_stage()
 	-- overlay_state 2 pause
 	-- overlay_state 3 end of level
 	pause_length = 5
-	negative_altitude = 0 -- default 0
+	negative_altitude = 31 -- default 0 (defined above)
 	-- remember to change weight as well back to 1 in one_up
-	score = 0
 	score_counter = 0
 	score_tabulate = 0
 	cloud_token = 0
@@ -867,7 +913,6 @@ function reset_to_next_stage()
 	water_shimmer_token = 1
 	water_sparkle = {194, 195, 196, 197}
 	dodge_state = 0
-	drone_dodge_state = 0
 	one_up_hit = 0
 	one_up_explode = 0
 	explode_animation = 0
@@ -879,12 +924,13 @@ function reset_to_next_stage()
 	huge_splash_particles = 0
 	huge_splash_sound = 0
 	first_raindrop()
+	one_up.weight = 100
 	for i=0,30 do
 		add_new_droplet(0)
 		add_new_rain(-1)
 	end
 	i=0
-	music(1, 1000, 3)
+	music(19, 1000, 3)
 
 end
 
@@ -928,6 +974,9 @@ function _update()
 		for d in all(drones) do
 			d:update()
 		end
+		for e in all(evil_green) do
+			e:update()
+		end
 		if one_up.weight > 10 and i > 15 and negative_altitude < 176.5 then
 			add_new_droplet(130)
 			i=0
@@ -949,9 +998,13 @@ function _update()
 			add_new_girder()
 			girder_token = 0
 		end
-		if drone_token > 100 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 then
+		if drone_token > 100 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 and level == 1 then
 			add_new_drone()
 			sfx(20)
+			drone_token = 0
+		end
+		if drone_token > 200 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 and level == 2 then
+			add_new_evil_green()
 			drone_token = 0
 		end
 
@@ -976,6 +1029,10 @@ function _update()
 
 				for d in all(drones) do
 					d:remove()
+				end
+
+				for e in all(evil_green) do
+					e:remove()
 				end
 
 				for dr in all(droplets) do
@@ -1068,9 +1125,13 @@ function _draw()
 			d:draw()
 		end
 
+		for e in all(evil_green) do
+			e:draw()
+		end
+
 		-- print('cpu:'..flr(stat(1)*100)..'%', 0, 6, 7)
 		-- print('w:'..one_up.weight, 0, 10, 7)
-		-- print('na:'..negative_altitude, 0, 16, 7)
+		print('dt:'..drone_token, 0, 16, 7)
 	elseif overlay_state == 3 then
 		cls()
 	elseif overlay_state == 4 then
@@ -1079,14 +1140,14 @@ function _draw()
 	end
 end
 __gfx__
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700000000000000000000000000000055555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000000000000000000005566666550000000000000000000000000000000000000000000000000000000222222000000000000000000000000
-00077000000000000000000000000000056666666665000000000000000000000000000000000000000000000000000002222222000000000000000000000000
-00700700000000000000000000000000566655566666500000000000000000000000000000000000000000000000000022a2a2a2000000000000000000000000
-00000000000000000000000000000005665566666666650555550000000000000000000000000000000002222220000222222222000000000000000000000000
-000000000000000000000000000000056656666666666666666655000000000000000000000000000000022a2a200002a2a212a2000000000000000000000000
+000000000000000000bbbb0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000b3333b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0070070000000000b333333b00000000000055555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0007700000000000b333333b00000000005566666550000000000000000000000000000000000000000000000000000000222222000000000000000000000000
+0007700000000000b333333b00000000056666666665000000000000000000000000000000000000000000000000000002222222000000000000000000000000
+0070070000000000b333333b00000000566655566666500000000000000000000000000000000000000000000000000022a2a2a2000000000000000000000000
+00000000000000000b3333b000000005665566666666650555550000000000000000000000000000000002222220000222222222000000000000000000000000
+000000000000000000bbbb00000000056656666666666666666655000000000000000000000000000000022a2a200002a2a212a2000000000000000000000000
 0c0000000cc000000ccccc0000000056666666666666665555566650000000000000000000000000000002222220000222222222000000000000000000000000
 c1c00000c11c0000cc111cc00000005666666666666666666665666500000000000000000000000000000221212000021212a2a2000000000000000000000000
 0c000000c11c0000c11111c000000056666666666666666666665666555550000000000000000000000002222220000222222222000000000000000000000000
@@ -1269,14 +1330,14 @@ __music__
 00 135b5944
 02 155b5944
 01 21424344
+00 1f215261
+00 1e1f2021
+00 1e1f2161
+00 1e202144
+00 1f5f6061
 00 1f201221
 00 1e1f1321
-00 1e201521
-00 1f424344
-00 1e1f2021
-00 1e1f2144
-02 1e202144
-00 59424344
+02 1e201521
 00 58424344
 00 5a424344
 

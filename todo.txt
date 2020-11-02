@@ -1,3 +1,9 @@
+- fix 2nd stage multiplier (score tabulation)
+- transition to 3rd stage
+- transition to YOU WIN - Winners don't do drugs?
+- roll credits
+
+
 - alternative girders:
 	- birds
 	- butterflies
