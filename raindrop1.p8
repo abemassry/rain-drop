@@ -14,15 +14,16 @@ function _init()
 	clouds={}
 	girders={}
 	drones={}
+	evil_green={}
 	water_shimmer={}
 	overlay_state = 0
 	-- overlay_state 0 title screen
 	-- overlay_state 1 main play
 	-- overlay_state 2 pause
 	-- overlay_state 3 end of level
-	level = 1 -- default 1
+	level = 3 -- default 1
 	pause_length = 5
-	negative_altitude = 173 -- default 0
+	negative_altitude = 75 -- default 0
 	-- remember to change weight as well back to 1 in one_up
 	score = 0
 	score_counter = 0
@@ -353,6 +354,90 @@ function draw_skyline(bg_height)
 
 end
 
+function draw_mountain_range(x_offset, bg_height)
+	for i=0,32 do
+		line(x_offset+40+i,bg_height+32-i, x_offset+40+64-i, bg_height+32-i, 0)
+	end
+	line(x_offset+40, bg_height+32, x_offset+40+32, bg_height+0, 5)
+	line(x_offset+40+32, bg_height+0, x_offset+40+64, bg_height+32, 5)
+
+	for i=0,32 do
+		line(x_offset+0+i,bg_height+32-i, x_offset+64-i, bg_height+32-i, 0)
+	end
+	line(x_offset+0, bg_height+32, x_offset+32, bg_height+0, 5)
+	line(x_offset+32, bg_height+0, x_offset+64, bg_height+32, 5)
+
+	for i=0,16 do
+		line(x_offset+16+33+i,16+bg_height+16-i, x_offset+16+65-i, 16+bg_height+16-i, 0)
+	end
+	line(x_offset+16+32, 16+bg_height+16, x_offset+16+50, 16+bg_height+0, 5)
+	line(x_offset+16+50, 16+bg_height+0, x_offset+16+66, 16+bg_height+16, 5)
+
+end
+function draw_mountain_range_reflection(x_offset, bg_height)
+	line(x_offset+40, bg_height+0, x_offset+40+32, bg_height+32, 5)
+	line(x_offset+40+32, bg_height+32, x_offset+40+64, bg_height+0, 5)
+
+	line(x_offset+0, bg_height+0, x_offset+32, bg_height+32, 5)
+	line(x_offset+32, bg_height+32, x_offset+64, bg_height+0, 5)
+
+	line(x_offset+16+32, 16+bg_height+0, x_offset+16+50, 16+bg_height+16, 5)
+	line(x_offset+16+50, 16+bg_height+16, x_offset+16+66, 16+bg_height+0, 5)
+
+end
+
+
+function draw_mountains(bg_height)
+	bg_height*=2
+	if (bg_height < 64) then
+		dodge_state = 1
+		bg_height = 64
+	end
+
+	bg_height += 4
+
+	palt(0, false)
+
+	-- second mountain range
+	draw_mountain_range(56, bg_height)
+
+	-- first mountain range on left
+	-- second mountain background offset
+	draw_mountain_range(-15, bg_height)
+
+	-- lower mountain range
+	bg_height += 10
+	draw_mountain_range(36, bg_height)
+	draw_mountain_range(-35, bg_height)
+
+
+	palt(0, true)
+
+	bg_height -= 14
+
+	line(-35+40+32, 32+16+bg_height+32, -35+40+64, 32+16+bg_height+0, 5)
+
+	line(-35+16+32, 32+16+bg_height+0, -35+16+50, 32+16+bg_height+16, 5)
+	line(-35+16+50, 32+16+bg_height+16, -35+16+66, 32+16+bg_height+0, 5)
+
+	line(36+16+32, 32+16+bg_height+0, 36+16+50, 32+16+bg_height+16, 5)
+	line(36+16+50, 32+16+bg_height+16, 36+16+66, 32+16+bg_height+0, 5)
+
+	--line(x_offset+0, bg_height+32, x_offset+32, bg_height+0, 5)
+	--line(x_offset+32, bg_height+0, x_offset+64, bg_height+32, 5)
+
+	add_new_shimmer(flr(rnd(128)), flr(rnd(15))+bg_height+32+16)
+
+	for w in all(water_shimmer) do
+		if (cloud_token % 5 == 0) then
+			w:update()
+		end
+		w:draw()
+	end
+
+end
+
+
 function draw_sky(bg_height)
 	for i=128,bg_height,-1 do
 		if i > 0 and i < 30 then
@@ -636,6 +721,9 @@ function add_new_droplet(initialy, initialx, initweight)
 		end,
 		remove=function(self)
 			del(droplets, self)
+			if self.weight == 0 then
+				sfx(10)
+			end
 		end
 	})
 end
@@ -783,6 +871,9 @@ function add_new_evil_green()
 		x=xstart,
 		y=10,
 		s=side,
+		y_mult=1,
+		lifetime=18*30,
+		id=flr(rnd(1000)),
 		remove=function(self)
 			del(evil_green, self)
 		end,
@@ -790,12 +881,28 @@ function add_new_evil_green()
 			spr(2, self.x, self.y)
 		end,
 		update=function(self)
-			if self.s == 0 then
+			if one_up.x > self.x then
 				self.x += 1
-			elseif self.s == 1 then
+			else
 				self.x -= 1
 			end
-			self.y += 1
+			if one_up.weight > 20 then
+				self.y_mult=1
+			else
+				self.y_mult=0.5
+			end
+			if one_up.y > self.y then
+				self.y += self.y_mult
+			else
+				self.y -= self.y_mult
+			end
+			if one_up.accel > 0 then
+				self.y -= one_up.accel - 1
+			end
+			self.lifetime-=1
+			if self.lifetime < 0 then
+				self.y-=3
+			end
 			osx_min = one_up.x - one_up.size - 1
 			osx_max = one_up.x + one_up.size + 1
 			osy_min = one_up.y - one_up.size - 1
@@ -808,9 +915,29 @@ function add_new_evil_green()
 						one_up_hit = 1
 					end
 			end
+
+			for dr in all(droplets) do
+				ex = flr(self.x)
+				ey = flr(self.y)
+				ex_min = ex - 8
+				ex_max = ex + 8
+				ey_min = ey - 8
+				ey_max = ey + 8
+				if (dr.x > ex_min and
+						dr.x < ex_max and
+						dr.y > ey_min and
+						dr.y < ey_max) then
+					dr.weight = 0
+					dr:remove()
+				end
+			end
+
 			if self.y < -10 then
 				del(evil_green, self)
 			end
+		end,
+		remove=function(self)
+			del(evil_green, self)
 		end
 	})
 end
@@ -850,6 +977,75 @@ function draw_end_first_stage_bg(bg_height)
 
 end
 
+function add_new_huge()
+	h=flr(rnd(2))
+	if (h==0) then
+		lr=flr(rnd(64))
+	else
+		lr=flr(rnd(64)) + 60
+	end
+	add(girders, {
+		handed=h,
+		x=lr,
+		y=132,
+		remove=function(self)
+			del(girders, self)
+		end,
+		draw=function(self)
+			if (self.handed == 0) then
+				-- left handed
+				spr(32, self.x, self.y, 1, 2, true, false)
+				for i=1,16 do
+					if i % 2 == 0 then
+						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2, true, false)
+					else
+						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2)
+					end
+				end
+			else
+				-- right handed
+				spr(32, self.x, self.y, 1, 2)
+				for i=1,16 do
+					if i % 2 == 0 then
+						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2, true, false)
+					else
+						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2)
+					end
+				end
+			end
+		end,
+		update=function(self)
+			-- self.y-=(weight_to_speed(one_up.weight, one_up.accel) / 350)
+			self.y-=(weight_to_speed(one_up.weight, one_up.accel))
+			if (self.handed == 1) then
+				right_edge = -8
+				left_edge = 0
+			else
+				right_edge = 0
+				left_edge = 15
+			end
+			osx_min = one_up.x - one_up.size - 1
+			osx_max = one_up.x + one_up.size + 1
+			osy_min = one_up.y - one_up.size - 1
+			osy_max = one_up.y + one_up.size + 1
+			for i=1,16 do
+				if (girder_size(self.x, self.handed, i) + left_edge > osx_min and
+						girder_size(self.x, self.handed, i) + right_edge < osx_max and
+						self.y + 16 > osy_min and
+						self.y < osy_max) then
+							if hit_token > 100 then
+								one_up_hit = 1
+							end
+							-- del(girders, self) -- TODO: change this
+				end
+			end
+			if self.y < -30 then
+				del(girders, self)
+			end
+		end
+	})
+end
+
 function draw_altitude_bar()
 	local multiplier = 127/175
 	local current_altitude = flr(negative_altitude * multiplier)
@@ -860,25 +1056,25 @@ function draw_altitude_bar()
 end
 
 function draw_score()
-	print(score, 2, 2, 5)
+	print(flr(score), 2, 2, 5)
 end
 
 function draw_transition()
-	local multiplier = flr(score/100) * 2
-	if multiplier < 1 then
-		multiplier = 1
-	end
 	if score_tabulate == 0 then
 		score = flr(score + one_up.weight)
 		score_tabulate = 1
 	end
-	if score_counter <= score then
+	local multiplier = flr(score/100) * 2
+	if multiplier < 1 then
+		multiplier = 1
+	end
+	if score_counter < score then
 		score_counter+=multiplier
 		sfx(17)
 	else
 		transition_timer += 1
 	end
-	print('score: '..score_counter, 40, 50, 7)
+	print('score: '..flr(score_counter), 40, 50, 7)
 	if transition_timer > 60 then
 		reset_to_next_stage()
 	end
@@ -896,15 +1092,22 @@ function reset_to_next_stage()
 	evil_green={}
 	water_shimmer={}
 	overlay_state = 1
-	level = 2 -- change this to if based on previous value
+
+	if level == 2 then
+		level = 3
+		music(28, 1000, 3)
+	else
+		level = 2
+		music(19, 1000, 3)
+	end
 	-- overlay_state 0 title screen
 	-- overlay_state 1 main play
 	-- overlay_state 2 pause
 	-- overlay_state 3 end of level
 	pause_length = 5
-	negative_altitude = 31 -- default 0 (defined above)
+	negative_altitude = 150 -- default 0 (defined above)
 	-- remember to change weight as well back to 1 in one_up
-	score_counter = 0
+	score_counter = score
 	score_tabulate = 0
 	cloud_token = 0
 	girder_token = 0
@@ -930,7 +1133,6 @@ function reset_to_next_stage()
 		add_new_rain(-1)
 	end
 	i=0
-	music(19, 1000, 3)
 
 end
 
@@ -975,6 +1177,21 @@ function _update()
 			d:update()
 		end
 		for e in all(evil_green) do
+			ex_min = e.x - 8
+			ex_max = e.x + 8
+			ey_min = e.y - 8
+			ey_max = e.y + 8
+			for eg in all(evil_green) do
+				if (eg.x > ex_min and
+						eg.x < ex_max and
+						eg.y > ey_min and
+						eg.y < ey_max and
+						e.id != eg.id) then
+					sfx(10)
+					e:remove()
+					break
+				end
+			end
 			e:update()
 		end
 		if one_up.weight > 10 and i > 15 and negative_altitude < 176.5 then
@@ -994,7 +1211,7 @@ function _update()
 			animate_clouds()
 			cloud_token = 0
 		end
-		if dodge_state == 1 and girder_token > 65 and negative_altitude > 130 and negative_altitude < 175 and one_up.weight > 25 then
+		if dodge_state == 1 and girder_token > 65 and negative_altitude > 130 and negative_altitude < 175 and one_up.weight > 25 and (level == 1 or level == 2) then
 			add_new_girder()
 			girder_token = 0
 		end
@@ -1003,8 +1220,12 @@ function _update()
 			sfx(20)
 			drone_token = 0
 		end
-		if drone_token > 200 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 and level == 2 then
+		if drone_token > 250 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 and level == 2 then
 			add_new_evil_green()
+			drone_token = 0
+		end
+		if drone_token > 100 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 and level == 3 then
+			add_new_huge()
 			drone_token = 0
 		end
 
@@ -1084,7 +1305,12 @@ function _draw()
 			draw_sky(bg_height)
 
 			-- rectfill(0, bg_height, 128, 128, 1)
-			draw_skyline(bg_height)
+			if level == 1 or level == 2 then
+				draw_skyline(bg_height)
+			elseif level == 3 then
+				draw_mountains(bg_height)
+			end
+
 
 			if negative_altitude > 175 then
 				if negative_altitude > 177 and negative_altitude < 400 then
@@ -1131,7 +1357,6 @@ function _draw()
 
 		-- print('cpu:'..flr(stat(1)*100)..'%', 0, 6, 7)
 		-- print('w:'..one_up.weight, 0, 10, 7)
-		print('dt:'..drone_token, 0, 16, 7)
 	elseif overlay_state == 3 then
 		cls()
 	elseif overlay_state == 4 then
@@ -1309,6 +1534,13 @@ __sfx__
 011000000e730107000e7300000011730117000e7300000013730000001373000000157300000013730000001a7301c7001a730180001d7301d7001a730180001f730180001f7301800021730180001f73000000
 011000001b773000001b773000002277322773000001b7731b773000001b773000002277322773000001b7731b773000001b773000002277322773000001b7731b773000001b773000002277322773000001b773
 010800202572018500255201850025520185002572020700267201850023520185002552018500257202070025720185002552018500265201850023720207002572028500255201850025520180002572020700
+015000000261003610036100361004610046100461004610046100461005610056100561005610056100561006610076100861009610096100a6100b6100c6100d6100e6100f6101061011610126101461015610
+011000001676016760167601676016760167601676016765127601276012760127601276012760127601276511760117601176011760117601176011760117650f7600f7600f7600f7600f7600f7600f7600f765
+011000001676416765167641676512764127651276412765117641176511764117650f7640f7650f7640f7651676416765167641676512764127651276412765117641176511764117650f7640f7650f7640f765
+011000000310003100031000310003100031000310003100031740317703177031770317703177031770317503100031000310003100031000310003100031000317403177031770317703177031770317703175
+011000000020600206002060020600206002060020600206002060020600206002060020600206002060020600206002060020600206002060020600206002060020600206002060020600206002060020600206
+011000001b7501b7501b7501b7501b7501b7501b7501b7501e7501e7501e7501e7501e7501e7501e7501e75022750227502275022750227502275022750227501270012700127001270012700167001670016700
+011000002e7642e7652e7642e7652a7642a7652a7642a76529764297652976429765277642776527764277652e7642e7652e7642e7652a7642a7652a7642a7652976429765297642976527764277652776427765
 __music__
 00 41004344
 01 02034445
@@ -1338,6 +1570,18 @@ __music__
 00 1f201221
 00 1e1f1321
 02 1e201521
-00 58424344
-00 5a424344
+01 63244344
+00 63244344
+00 63244344
+00 63254344
+00 63254344
+00 41254344
+00 67264344
+00 41264344
+00 28254344
+00 28254344
+00 41294344
+00 41294344
+00 41264344
+02 41274344
 

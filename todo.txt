@@ -1,4 +1,3 @@
-- fix 2nd stage multiplier (score tabulation)
 - transition to 3rd stage
 - transition to YOU WIN - Winners don't do drugs?
 - roll credits
@@ -20,7 +19,7 @@
 	- jawn
 
 # Stage 2
-- evil green raindrop kinda like acid rain
+- alkaline rain chases evil rain (good ai vs bad ai)
 
 # Stage 3
 - huge droplets to dodge
@@ -29,6 +28,7 @@
 
 # Advice
 	- Damage == Drama
+	- snow
 
 # Promotion
 - Add twitch bot
