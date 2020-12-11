@@ -15,6 +15,7 @@ function _init()
 	girders={}
 	drones={}
 	evil_green={}
+	huge_drops={}
 	water_shimmer={}
 	overlay_state = 0
 	-- overlay_state 0 title screen
@@ -978,69 +979,42 @@ function draw_end_first_stage_bg(bg_height)
 end
 
 function add_new_huge()
-	h=flr(rnd(2))
-	if (h==0) then
-		lr=flr(rnd(64))
+	handed=flr(rnd(2))
+	if handed % 2 == 0 then
+		h = 1
 	else
-		lr=flr(rnd(64)) + 60
+		h = 127
 	end
-	add(girders, {
-		handed=h,
-		x=lr,
-		y=132,
+	radius=50
+	multiplier=(flr(radius/(1.3)))
+	add(huge_drops, {
+		x=h,
+		y=175,
+		r=radius,
+		m=multiplier,
 		remove=function(self)
-			del(girders, self)
+			del(huge_drops, self)
 		end,
 		draw=function(self)
-			if (self.handed == 0) then
-				-- left handed
-				spr(32, self.x, self.y, 1, 2, true, false)
-				for i=1,16 do
-					if i % 2 == 0 then
-						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2, true, false)
-					else
-						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2)
-					end
-				end
-			else
-				-- right handed
-				spr(32, self.x, self.y, 1, 2)
-				for i=1,16 do
-					if i % 2 == 0 then
-						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2, true, false)
-					else
-						spr(33, girder_size(self.x, self.handed, i), self.y, 1, 2)
-					end
-				end
-			end
+			circfill(self.x, self.y, self.r, 1)
+			circ(self.x, self.y, self.r, 12)
 		end,
 		update=function(self)
-			-- self.y-=(weight_to_speed(one_up.weight, one_up.accel) / 350)
 			self.y-=(weight_to_speed(one_up.weight, one_up.accel))
-			if (self.handed == 1) then
-				right_edge = -8
-				left_edge = 0
-			else
-				right_edge = 0
-				left_edge = 15
-			end
 			osx_min = one_up.x - one_up.size - 1
 			osx_max = one_up.x + one_up.size + 1
 			osy_min = one_up.y - one_up.size - 1
 			osy_max = one_up.y + one_up.size + 1
-			for i=1,16 do
-				if (girder_size(self.x, self.handed, i) + left_edge > osx_min and
-						girder_size(self.x, self.handed, i) + right_edge < osx_max and
-						self.y + 16 > osy_min and
-						self.y < osy_max) then
-							if hit_token > 100 then
-								one_up_hit = 1
-							end
-							-- del(girders, self) -- TODO: change this
-				end
+			if (self.x+self.m > osx_min and
+					self.x-self.m < osx_max and
+					self.y+self.m > osy_min and
+					self.y-self.m < osy_max) then
+					if (hit_token > 100) then
+						one_up_hit = 1
+					end
 			end
-			if self.y < -30 then
-				del(girders, self)
+			if self.y < -self.r then
+				del(huge_drops, self)
 			end
 		end
 	})
@@ -1090,6 +1064,7 @@ function reset_to_next_stage()
 	clouds={}
 	girders={}
 	evil_green={}
+	huge_drops={}
 	water_shimmer={}
 	overlay_state = 1
 
@@ -1194,6 +1169,9 @@ function _update()
 			end
 			e:update()
 		end
+		for h in all(huge_drops) do
+			h:update()
+		end
 		if one_up.weight > 10 and i > 15 and negative_altitude < 176.5 then
 			add_new_droplet(130)
 			i=0
@@ -1224,7 +1202,7 @@ function _update()
 			add_new_evil_green()
 			drone_token = 0
 		end
-		if drone_token > 100 and negative_altitude > 30 and negative_altitude < 100 and one_up.weight > 25 and level == 3 then
+		if drone_token > 100 and negative_altitude > 30 and negative_altitude < 175 and one_up.weight > 25 and level == 3 then
 			add_new_huge()
 			drone_token = 0
 		end
@@ -1254,6 +1232,10 @@ function _update()
 
 				for e in all(evil_green) do
 					e:remove()
+				end
+
+				for h in all(huge_drops) do
+					h:remove()
 				end
 
 				for dr in all(droplets) do
@@ -1353,6 +1335,10 @@ function _draw()
 
 		for e in all(evil_green) do
 			e:draw()
+		end
+
+		for h in all(huge_drops) do
+			h:draw()
 		end
 
 		-- print('cpu:'..flr(stat(1)*100)..'%', 0, 6, 7)
