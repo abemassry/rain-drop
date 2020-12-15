@@ -1,8 +1,16 @@
 - transition to YOU WIN - Winners don't do drugs?
+  - RIP William Sessions
 - roll credits
 - credits ending song
-- fix enemy second level
+- D U L R (X or O) ?
 
+- Bronami code mode
+  - Start out lower, past the stage over 100
+  - Initial weight is 75
+  - You don't lose water while accelerating downwards
+  - All raindrops are green and hurt you
+  - Every die is the pac-man sound effect die
+  - Score is time based
 
 - alternative girders:
 	- birds
@@ -23,8 +31,6 @@
 - alkaline rain chases evil rain (good ai vs bad ai)
 
 # Stage 3
-- huge droplets to dodge
-- mountains in the distance
 
 
 # Advice
