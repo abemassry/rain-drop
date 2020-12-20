@@ -1192,11 +1192,14 @@ function display_credit(credit)
 	end
 
 	if (credit == 10) then
-		print('with support from', 20 + pad_left, 50, 7)
-		spr(127, 28 + pad_left, 55)
-		print('@mindym121', 37 + pad_left, 57, 7)
-		spr(111, 30 + pad_left, 62)
-		print('@un1c0rn', 37 + pad_left, 64, 7)
+		print('with love and support from', 6 + pad_left, 50, 7)
+		spr(127, 30 + pad_left, 55)
+		print('@mindym121', 38 + pad_left, 57, 7)
+		spr(111, 32 + pad_left, 63)
+		print('@un1c0rn', 39 + pad_left, 64, 7)
+		print('@spidermonkey', 29 + pad_left, 71, 7)
+		spr(127, 19 + pad_left, 77)
+		print('@siberianfurball', 27 + pad_left, 78, 7)
 	end
 
 	if (credit == 11) then
@@ -1222,7 +1225,21 @@ function rolling_credits_active(y)
 		'@lyn81',
 		'@victorycondition',
 		'@itsphillc',
-		'@lucky_chucky7'
+		'@lucky_chucky7',
+		'@zerotoherodev',
+		'@evinjenioso',
+		'@displague',
+		'@yodadog',
+		'@diagnostuck',
+		'@puffinplaytv',
+		'@alladuss',
+		'@rps_75',
+		'@machado_tv',
+		'@prozacgod',
+		'@bigwaterkids12',
+		'@arieshothead',
+		'@slickshoess',
+		'@kr_deepblack'
 	}
 	print('creative contributors', 22 + pad_left, y, 7)
 	for c in all(creative_contributors) do
@@ -1314,10 +1331,13 @@ function _update()
 
 			cls()
 			music(1, 1000, 3)
+			-- start of play
 			first_raindrop()
-			for i=0,30 do
-				add_new_droplet(0)
-				add_new_rain(-1)
+			if not monamie then
+				for i=0,30 do
+					add_new_droplet(0)
+					add_new_rain(-1)
+				end
 			end
 		end
 		if (btn(0) or btn(1) or btn(2) or btn(3)) then
@@ -1415,6 +1435,9 @@ function _update()
 		drone_token+=1
 		girder_token+=1
 		hit_token+=1
+		if monamie then
+			hit_token = 101
+		end
 		if negative_altitude > 30 and #clouds < 2 and cloud_token > 900 and negative_altitude < 150 then
 			animate_clouds()
 			cloud_token = 0
