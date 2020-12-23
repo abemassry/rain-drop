@@ -30,10 +30,9 @@ function _init()
 	-- overlay_state 3 end of level
 	-- overlay_state 4 transition
 	-- overlay_state 5 credits
-	level = 3 -- default 1
+	level = 1 -- default 1
 	pause_length = 5
 	negative_altitude = 0 -- default 0
-	-- remember to change weight as well back to 1 in one_up
 	score = 0
 	score_counter = 0
 	score_tabulate = 0
@@ -1073,6 +1072,7 @@ function draw_transition()
 		score_counter+=multiplier
 		sfx(17)
 	else
+		score_counter = score
 		transition_timer += 1
 	end
 	print('score: '..flr(score_counter), 40, 50, 7)
@@ -1114,8 +1114,6 @@ function reset_to_next_stage()
 	-- overlay_state 2 pause
 	-- overlay_state 3 end of level
 	pause_length = 5
-	negative_altitude = 150 -- default 0 (defined above)
-	-- remember to change weight as well back to 1 in one_up
 	score_counter = score
 	score_tabulate = 0
 	cloud_token = 0
@@ -1136,10 +1134,11 @@ function reset_to_next_stage()
 	huge_splash_particles = 0
 	huge_splash_sound = 0
 	first_raindrop()
-	one_up.weight = 100
-	for i=0,30 do
-		add_new_droplet(0)
-		add_new_rain(-1)
+	if not monamie then
+		for i=0,30 do
+			add_new_droplet(0)
+			add_new_rain(-1)
+		end
 	end
 	i=0
 

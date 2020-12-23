@@ -1,7 +1,6 @@
-- make sure score is correct
-
-- Bronami code mode
-  - Score is time based
+- make itch.io page
+- post on bbs
+- post on github
 
 - alternative girders:
 	- birds
