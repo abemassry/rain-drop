@@ -37,6 +37,8 @@ This is all set to an original techno soundtrack.
 
 P.S. There is a familiar Easter egg on the title screen and here is a not so small hint. Up, Up, Down, Down, Left, Right, Left, Right.
 
+### Credits
+
 This was all made possible with many people's support, so here are the credits to the game:
 
 Game Design:
